@@ -1,0 +1,20 @@
+# Virtual environment
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Simulation/build outputs
+sim_build/
+logs/
+results/
+
+# ML artifacts (if any)
+*.pkl
+*.pt
+*.h5
+
+# OS junk
+.DS_Store
