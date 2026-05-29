@@ -1,28 +1,90 @@
 import pandas as pd
 from sklearn.cluster import KMeans
 
-# Load data
-df = pd.read_csv("prioritized_tests.csv")
+# =====================================================
+# Load prioritized testcases
+# =====================================================
 
-print("Original size:", len(df))
+df = pd.read_csv(
+    "prioritized_tests.csv"
+)
 
-#  features for clustering
-X = df[['opcode', 'a_type', 'b_type', 'predicted_gain']]
+print(
+    "Original size:",
+    len(df)
+)
 
-# Number of clusters (min 50, dont keep too high it wont reduce)
-k = 135
+# =====================================================
+# Features for clustering
+# =====================================================
 
-kmeans = KMeans(n_clusters=k, random_state=42)
-df['cluster'] = kmeans.fit_predict(X)
+X = df[
+    [
+        "write_en",
+        "read_en",
+        "fifo_state",
+        "data_type",
+        "predicted_gain"
+    ]
+]
 
-# Pick BEST testcase from each cluster
-best_tests = df.loc[df.groupby('cluster')['predicted_gain'].idxmax()]
+# =====================================================
+# Number of clusters
+# =====================================================
 
-# Sort again
-best_tests = best_tests.sort_values(by='predicted_gain', ascending=False)
+k = 50
 
-# Save result
-best_tests.to_csv("clustered_tests.csv", index=False)
+k = min(
+    k,
+    len(df)
+)
 
-print("Reduced size:", len(best_tests))
-print(best_tests.head())
+# =====================================================
+# Run clustering
+# =====================================================
+
+kmeans = KMeans(
+    n_clusters=k,
+    random_state=42
+)
+
+df["cluster"] = kmeans.fit_predict(
+    X
+)
+
+# =====================================================
+# Pick best testcase from each cluster
+# =====================================================
+
+best_tests = df.loc[
+    df.groupby("cluster")[
+        "predicted_gain"
+    ].idxmax()
+]
+
+# =====================================================
+# Sort again by priority
+# =====================================================
+
+best_tests = best_tests.sort_values(
+    by="predicted_gain",
+    ascending=False
+)
+
+# =====================================================
+# Save clustered testcases
+# =====================================================
+
+best_tests.to_csv(
+    "clustered_tests.csv",
+    index=False
+)
+
+print(
+    "Reduced size:",
+    len(best_tests)
+)
+
+print(
+    best_tests.head()
+)
