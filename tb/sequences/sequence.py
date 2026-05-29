@@ -4,12 +4,30 @@ import random
 from pyuvm import uvm_sequence
 
 from tb.sequences.sequence_item import FIFOSeqItem
+
 from hybrid.ml_pool import MLTestPool
+from hybrid.hybrid_selector import select_mode
+
+from tb.components.env import (
+    get_last_gain_label,
+    is_coverage_complete
+)
+
+from hybrid.hybrid_config import (
+    STAGNATION_THRESHOLD,
+    ENABLE_EARLY_STOP,
+    MAX_TESTS
+)
 
 
 class FIFOSequence(uvm_sequence):
 
-    def __init__(self, name="FIFOSequence", num_tests=300, use_ml=False):
+    def __init__(
+        self,
+        name="FIFOSequence",
+        num_tests=36,
+        use_ml=False
+    ):
         super().__init__(name)
 
         self.num_tests = num_tests
@@ -29,10 +47,26 @@ class FIFOSequence(uvm_sequence):
     async def body(self):
 
         # =====================================================
-        # ML MODE
+        # BASELINE MODE
         # =====================================================
 
-        if self.use_ml:
+        if not self.use_ml:
+
+            print(
+                f"[BASELINE MODE] "
+                f"Running {self.num_tests} tests"
+            )
+
+        # =====================================================
+        # HYBRID MODE
+        # =====================================================
+
+        else:
+
+            print(
+                "[HYBRID MODE] "
+                "Running adaptive hybrid execution"
+            )
 
             base_dir = os.path.dirname(__file__)
 
@@ -45,26 +79,75 @@ class FIFOSequence(uvm_sequence):
                 csv_path
             )
 
-            print(
-                f"[ML MODE] Running "
-                f"{len(ml_pool.testcases)} testcases"
-            )
-
             reverse_map = {
                 0: "ZERO",
                 1: "SMALL",
                 2: "LARGE"
             }
 
-            for _ in range(
-                len(ml_pool.testcases)
-            ):
+            consecutive_no_gain = 0
+
+        # =====================================================
+        # Main execution loop
+        # =====================================================
+
+        total_tests = (
+            self.num_tests
+            if not self.use_ml
+            else MAX_TESTS
+        )
+
+        for _ in range(total_tests):
+
+            # ==========================================
+            # Early stop on full coverage
+            # ==========================================
+
+            if self.use_ml and ENABLE_EARLY_STOP:
+
+                if is_coverage_complete():
+
+                    print(
+                        "[HYBRID] Coverage complete. "
+                        "Stopping."
+                    )
+
+                    break
+
+            # ==========================================
+            # BASELINE
+            # ==========================================
+
+            if not self.use_ml:
+
+                mode = "random"
+
+            # ==========================================
+            # HYBRID
+            # ==========================================
+
+            else:
+
+                stagnated = (
+                    consecutive_no_gain >=
+                    STAGNATION_THRESHOLD
+                )
+
+                mode = select_mode(
+                    stagnated=stagnated
+                )
+
+            item = FIFOSeqItem(
+                "item"
+            )
+
+            # ==========================================
+            # ML testcase
+            # ==========================================
+
+            if self.use_ml and mode == "ml":
 
                 tc = ml_pool.get_next()
-
-                item = FIFOSeqItem(
-                    "item"
-                )
 
                 item.write_en = tc[
                     "write_en"
@@ -84,122 +167,36 @@ class FIFOSequence(uvm_sequence):
                     data_type
                 )
 
-                item.mode = "ml"
+            # ==========================================
+            # RANDOM testcase
+            # ==========================================
 
-                await self.start_item(
-                    item
-                )
+            else:
 
-                await self.finish_item(
-                    item
-                )
+                item.randomize()
 
-        # =====================================================
-        # BASELINE MODE
-        # =====================================================
+            item.mode = mode
 
-        else:
-
-            print(
-                f"[BASELINE MODE] Running "
-                f"{self.num_tests} tests"
+            await self.start_item(
+                item
             )
 
-            data_types = [
-                "ZERO",
-                "SMALL",
-                "LARGE"
-            ]
+            await self.finish_item(
+                item
+            )
 
-            dt_idx = 0
+            # ==========================================
+            # Stagnation tracking
+            # ==========================================
 
-            # ---------------------------------------------
-            # PHASE 1 : FILL FIFO
-            # ---------------------------------------------
+            if self.use_ml:
 
-            for _ in range(20):
+                gain = get_last_gain_label()
 
-                item = FIFOSeqItem("item")
+                if gain == 0:
 
-                item.write_en = 1
-                item.read_en = 0
+                    consecutive_no_gain += 1
 
-                dt = data_types[
-                    dt_idx % len(data_types)
-                ]
+                else:
 
-                dt_idx += 1
-
-                item.data_type = dt
-
-                item.data_in = self.generate_value(
-                    dt
-                )
-
-                item.mode = "random"
-
-                await self.start_item(item)
-                await self.finish_item(item)
-
-            # ---------------------------------------------
-            # PHASE 2 : DRAIN FIFO
-            # ---------------------------------------------
-
-            for _ in range(20):
-
-                item = FIFOSeqItem("item")
-
-                item.write_en = 0
-                item.read_en = 1
-
-                dt = data_types[
-                    dt_idx % len(data_types)
-                ]
-
-                dt_idx += 1
-
-                item.data_type = dt
-
-                item.data_in = self.generate_value(
-                    dt
-                )
-
-                item.mode = "random"
-
-                await self.start_item(item)
-                await self.finish_item(item)
-
-            # ---------------------------------------------
-            # PHASE 3 : MIXED OPERATIONS
-            # ---------------------------------------------
-
-            for _ in range(self.num_tests - 40):
-
-                item = FIFOSeqItem("item")
-
-                item.write_en = random.randint(
-                    0,
-                    1
-                )
-
-                item.read_en = random.randint(
-                    0,
-                    1
-                )
-
-                dt = data_types[
-                    dt_idx % len(data_types)
-                ]
-
-                dt_idx += 1
-
-                item.data_type = dt
-
-                item.data_in = self.generate_value(
-                    dt
-                )
-
-                item.mode = "random"
-
-                await self.start_item(item)
-                await self.finish_item(item)
+                    consecutive_no_gain = 0
