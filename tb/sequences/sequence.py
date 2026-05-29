@@ -1,9 +1,10 @@
-import pandas as pd
 import os
 import random
 
 from pyuvm import uvm_sequence
+
 from tb.sequences.sequence_item import FIFOSeqItem
+from hybrid.ml_pool import MLTestPool
 
 
 class FIFOSequence(uvm_sequence):
@@ -40,10 +41,13 @@ class FIFOSequence(uvm_sequence):
                 "../../ml/clustered_tests.csv"
             )
 
-            df = pd.read_csv(csv_path)
+            ml_pool = MLTestPool(
+                csv_path
+            )
 
             print(
-                f"[ML MODE] Running {len(df)} testcases"
+                f"[ML MODE] Running "
+                f"{len(ml_pool.testcases)} testcases"
             )
 
             reverse_map = {
@@ -52,20 +56,26 @@ class FIFOSequence(uvm_sequence):
                 2: "LARGE"
             }
 
-            for _, row in df.iterrows():
+            for _ in range(
+                len(ml_pool.testcases)
+            ):
 
-                item = FIFOSeqItem("item")
+                tc = ml_pool.get_next()
 
-                item.write_en = int(
-                    row["write_en"]
+                item = FIFOSeqItem(
+                    "item"
                 )
 
-                item.read_en = int(
-                    row["read_en"]
-                )
+                item.write_en = tc[
+                    "write_en"
+                ]
+
+                item.read_en = tc[
+                    "read_en"
+                ]
 
                 data_type = reverse_map[
-                    int(row["data_type"])
+                    tc["data_type"]
                 ]
 
                 item.data_type = data_type
@@ -76,8 +86,13 @@ class FIFOSequence(uvm_sequence):
 
                 item.mode = "ml"
 
-                await self.start_item(item)
-                await self.finish_item(item)
+                await self.start_item(
+                    item
+                )
+
+                await self.finish_item(
+                    item
+                )
 
         # =====================================================
         # BASELINE MODE
