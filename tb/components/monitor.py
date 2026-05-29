@@ -46,40 +46,43 @@ class FIFOMonitor(uvm_monitor):
             # Capture inputs
             # =====================================
 
-            curr.write_en = (
-                self.dut.write_en.value.integer
+            curr.write_en = int(
+                str(self.dut.write_en.value)
             )
 
-            curr.read_en = (
-                self.dut.read_en.value.integer
+            curr.read_en = int(
+                str(self.dut.read_en.value)
             )
 
-            curr.data_in = (
-                self.dut.data_in.value.integer
+            curr.data_in = int(
+                str(self.dut.data_in.value)
             )
 
             # =====================================
             # Capture status signals
             # =====================================
 
-            curr.full = (
-                self.dut.full.value.integer
+            curr.full = int(
+                str(self.dut.full.value)
             )
 
-            curr.empty = (
-                self.dut.empty.value.integer
+            curr.empty = int(
+                str(self.dut.empty.value)
             )
 
             # =====================================
             # Capture output
             # =====================================
 
-            curr.data_out = (
-                self.dut.data_out.value.integer
+            curr.data_out = int(
+                str(self.dut.data_out.value)
             )
 
             # =====================================
             # FIFO alignment
+            #
+            # Send previous transaction and
+            # attach current cycle data_out
             # =====================================
 
             if self.prev_item is not None:
@@ -88,6 +91,7 @@ class FIFOMonitor(uvm_monitor):
                     curr.data_out
                 )
 
+                # Hybrid mode tracking
                 self.prev_item.mode = getattr(
                     self,
                     "last_mode",
