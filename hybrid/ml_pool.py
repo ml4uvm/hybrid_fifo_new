@@ -18,7 +18,6 @@ class MLTestPool:
                 "ML pool is empty!"
             )
 
-        # Prevent exhaustion
         self.iterator = cycle(
             self.testcases
         )
@@ -31,7 +30,7 @@ class MLTestPool:
 
         testcases = []
 
-        with open(file_path, 'r') as f:
+        with open(file_path, "r") as f:
 
             reader = csv.DictReader(f)
 
@@ -39,25 +38,18 @@ class MLTestPool:
 
                 testcase = {
 
-                    # FIFO operation signals
-                    "wr_en": int(row["wr_en"]),
-                    "rd_en": int(row["rd_en"]),
+                    "write_en": int(
+                        row["write_en"]
+                    ),
 
-                    # FIFO stimulus features
+                    "read_en": int(
+                        row["read_en"]
+                    ),
+
                     "data_type": int(
                         row["data_type"]
                     ),
 
-                    # FIFO state-related features
-                    "fifo_state": int(
-                        row["fifo_state"]
-                    ),
-
-                    "occupancy_level": int(
-                        row["occupancy_level"]
-                    ),
-
-                    # ML metadata
                     "predicted_gain": float(
                         row["predicted_gain"]
                     ),
