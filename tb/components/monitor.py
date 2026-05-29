@@ -23,6 +23,15 @@ class FIFOMonitor(uvm_monitor):
 
     async def run_phase(self):
 
+        # =====================================
+        # Wait for reset/initialization
+        # =====================================
+
+        for _ in range(3):
+            await RisingEdge(
+                self.dut.clk
+            )
+
         while True:
 
             await RisingEdge(
@@ -37,43 +46,40 @@ class FIFOMonitor(uvm_monitor):
             # Capture inputs
             # =====================================
 
-            curr.write_en = int(
-                self.dut.write_en.value
+            curr.write_en = (
+                self.dut.write_en.value.integer
             )
 
-            curr.read_en = int(
-                self.dut.read_en.value
+            curr.read_en = (
+                self.dut.read_en.value.integer
             )
 
-            curr.data_in = int(
-                self.dut.data_in.value
+            curr.data_in = (
+                self.dut.data_in.value.integer
             )
 
             # =====================================
             # Capture status signals
             # =====================================
 
-            curr.full = int(
-                self.dut.full.value
+            curr.full = (
+                self.dut.full.value.integer
             )
 
-            curr.empty = int(
-                self.dut.empty.value
+            curr.empty = (
+                self.dut.empty.value.integer
             )
 
             # =====================================
             # Capture output
             # =====================================
 
-            curr.data_out = int(
-                self.dut.data_out.value
+            curr.data_out = (
+                self.dut.data_out.value.integer
             )
 
             # =====================================
             # FIFO alignment
-            #
-            # Send previous transaction and
-            # attach current cycle data_out
             # =====================================
 
             if self.prev_item is not None:
@@ -82,7 +88,6 @@ class FIFOMonitor(uvm_monitor):
                     curr.data_out
                 )
 
-                # Hybrid mode tracking
                 self.prev_item.mode = getattr(
                     self,
                     "last_mode",
