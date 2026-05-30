@@ -6,17 +6,13 @@ from pyuvm import uvm_sequence
 from tb.sequences.sequence_item import FIFOSeqItem
 
 from hybrid.ml_pool import MLTestPool
-from hybrid.hybrid_selector import select_mode
 
 from tb.components.env import (
-    get_last_gain_label,
     is_coverage_complete
 )
 
 from hybrid.hybrid_config import (
-    STAGNATION_THRESHOLD,
-    ENABLE_EARLY_STOP,
-    MAX_TESTS
+    ENABLE_EARLY_STOP
 )
 
 
@@ -66,8 +62,8 @@ class FIFOSequence(uvm_sequence):
         else:
 
             print(
-                "[HYBRID MODE] "
-                "Running adaptive hybrid execution"
+                f"[HYBRID MODE] "
+                f"Running {self.num_tests} tests"
             )
 
             base_dir = os.path.dirname(__file__)
@@ -87,22 +83,16 @@ class FIFOSequence(uvm_sequence):
                 2: "LARGE"
             }
 
-            consecutive_no_gain = 0
-
         # =====================================================
-        # Main execution loop
+        # Fixed testcase budget
         # =====================================================
 
-        total_tests = (
-            self.num_tests
-            if not self.use_ml
-            else MAX_TESTS
-        )
+        total_tests = self.num_tests
 
         for _ in range(total_tests):
 
             # ==========================================
-            # Early stop on full coverage
+            # Stop if all bins covered
             # ==========================================
 
             if self.use_ml and ENABLE_EARLY_STOP:
@@ -125,19 +115,20 @@ class FIFOSequence(uvm_sequence):
                 mode = "random"
 
             # ==========================================
-            # HYBRID
+            # TRUE HYBRID
+            # 80% ML
+            # 20% RANDOM
             # ==========================================
 
             else:
 
-                stagnated = (
-                    consecutive_no_gain >=
-                    STAGNATION_THRESHOLD
-                )
+                if random.random() < 0.2:
 
-                mode = select_mode(
-                    stagnated=stagnated
-                )
+                    mode = "random"
+
+                else:
+
+                    mode = "ml"
 
             item = FIFOSeqItem(
                 "item"
@@ -188,22 +179,6 @@ class FIFOSequence(uvm_sequence):
             )
 
             executed_tests += 1
-
-            # ==========================================
-            # Stagnation tracking
-            # ==========================================
-
-            if self.use_ml:
-
-                gain = get_last_gain_label()
-
-                if gain == 0:
-
-                    consecutive_no_gain += 1
-
-                else:
-
-                    consecutive_no_gain = 0
 
         # =====================================================
         # Final statistics
