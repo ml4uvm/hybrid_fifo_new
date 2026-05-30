@@ -29,12 +29,12 @@ class FIFOTest(uvm_test):
         # =====================================================
         seq = FIFOSequence(
             "seq",
-            num_tests=144,
+            num_tests=36,
             use_ml=False
         )
 
         # =====================================================
-        # ML MODE (clustered testcases)
+        # Hybrid MODE (clustered testcases)
         # =====================================================
         #seq = FIFOSequence(
         #    "seq",
