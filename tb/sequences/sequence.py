@@ -46,6 +46,8 @@ class FIFOSequence(uvm_sequence):
 
     async def body(self):
 
+        executed_tests = 0
+
         # =====================================================
         # BASELINE MODE
         # =====================================================
@@ -185,6 +187,8 @@ class FIFOSequence(uvm_sequence):
                 item
             )
 
+            executed_tests += 1
+
             # ==========================================
             # Stagnation tracking
             # ==========================================
@@ -200,3 +204,21 @@ class FIFOSequence(uvm_sequence):
                 else:
 
                     consecutive_no_gain = 0
+
+        # =====================================================
+        # Final statistics
+        # =====================================================
+
+        if self.use_ml:
+
+            print(
+                f"[HYBRID] Executed "
+                f"{executed_tests} testcases"
+            )
+
+        else:
+
+            print(
+                f"[BASELINE] Executed "
+                f"{executed_tests} testcases"
+            )
