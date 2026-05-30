@@ -3,33 +3,24 @@
 # =========================================================
 
 # =========================================================
-# Exploration configuration
+# Exploration probability
 # =========================================================
 
-# 🔥 Used ONLY during stagnation
-EXPLORATION_EPSILON = 0.2
+# 20% random exploration
+# 80% ML exploitation
 
-# 🔥 Number of consecutive no-gain tests
-# before exploration activates
-STAGNATION_THRESHOLD = 10
+EXPLORATION_EPSILON = 0.2
 
 # =========================================================
 # Coverage-aware control
 # =========================================================
 
 # Stop simulation once all bins are covered
+
 ENABLE_EARLY_STOP = True
 
 # =========================================================
-# Safety limits
-# =========================================================
-
-MAX_TESTS = 500
-
-# =========================================================
-# Debug / logging
+# Logging
 # =========================================================
 
 LOG_MODE_ENABLED = True
-
-DEBUG_PRINT = False
