@@ -25,8 +25,9 @@ class FIFOTest(uvm_test):
         self.raise_objection()
 
         # =====================================================
-        # BASELINE MODE (guided/random)
+        # BASELINE MODE
         # =====================================================
+
         seq = FIFOSequence(
             "seq",
             num_tests=36,
@@ -34,12 +35,14 @@ class FIFOTest(uvm_test):
         )
 
         # =====================================================
-        # Hybrid MODE (clustered testcases)
+        # HYBRID MODE
         # =====================================================
-        #seq = FIFOSequence(
-        #    "seq",
-        #    use_ml=True
-        #)
+
+        # seq = FIFOSequence(
+        #     "seq",
+        #     num_tests=36,
+        #     use_ml=True
+        # )
 
         await seq.start(
             self.env.agent.seqr
@@ -51,7 +54,6 @@ class FIFOTest(uvm_test):
 @cocotb.test()
 async def run_test(dut):
 
-    # Start FIFO clock
     clock = Clock(
         dut.clk,
         10,
