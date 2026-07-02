@@ -6,7 +6,7 @@ from cocotb.triggers import RisingEdge
 class FIFODriver(uvm_driver):
     def build_phase(self):
         self.dut = cocotb.top
-        self.last_mode = "random"  # NEW: exposes the mode of the most recently driven item
+        self.last_mode = "random"  # exposes mode of the most recently driven item
 
     async def run_phase(self):
         # ----------------------------
@@ -22,7 +22,7 @@ class FIFODriver(uvm_driver):
         await RisingEdge(self.dut.clk)
 
         # ----------------------------
-        # Main driver loop
+        # Main driver loop — one item, one sampled edge
         # ----------------------------
         while True:
             item = await self.seq_item_port.get_next_item()
@@ -31,10 +31,7 @@ class FIFODriver(uvm_driver):
             self.dut.write_en.value = item.write_en
             self.dut.read_en.value = item.read_en
             self.dut.data_in.value = item.data_in & 0xFF
-
-            self.last_mode = getattr(item, "mode", "random")  # NEW
+            self.last_mode = getattr(item, "mode", "random")
 
             await RisingEdge(self.dut.clk)
-            self.dut.write_en.value = 0
-            self.dut.read_en.value = 0
             self.seq_item_port.item_done()
