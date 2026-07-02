@@ -15,14 +15,14 @@ class FIFOTest(uvm_test):
         # =====================================================
         # BASELINE MODE (CRV/CDV comparison)
         # =====================================================
-        seq = FIFOSequence("seq", total_budget=36, use_hybrid=False)
+        seq = FIFOSequence("seq", total_budget=180, use_hybrid=False)
 
         # =====================================================
         # HYBRID MODE (ML pool -> software-tracked-state gap filling)
         # Budget matches the CRV/CDV baseline exactly, per paper's
         # Table II testcase counts: 36, 54, 72, 108, 144
         # =====================================================
-        #seq = FIFOSequence("seq", total_budget=36, use_hybrid=True)
+        #seq = FIFOSequence("seq", total_budget=180, use_hybrid=True)
 
         await seq.start(self.env.agent.seqr)
         self.drop_objection()
