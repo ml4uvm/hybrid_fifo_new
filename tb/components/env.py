@@ -204,29 +204,14 @@ class CoverageExport(uvm_analysis_export):
 # =========================================================
 
 class FIFOAgent(uvm_agent):
-
     def build_phase(self):
-
-        self.seqr = uvm_sequencer(
-            "seqr",
-            self
-        )
-
-        self.driver = FIFODriver(
-            "driver",
-            self
-        )
-
-        self.monitor = FIFOMonitor(
-            "monitor",
-            self
-        )
+        self.seqr = uvm_sequencer("seqr", self)
+        self.driver = FIFODriver("driver", self)
+        self.monitor = FIFOMonitor("monitor", self)
 
     def connect_phase(self):
-
-        self.driver.seq_item_port.connect(
-            self.seqr.seq_item_export
-        )
+        self.driver.seq_item_port.connect(self.seqr.seq_item_export)
+        self.monitor.driver = self.driver  # NEW: lets monitor read driver.last_mode
 
 
 # =========================================================
