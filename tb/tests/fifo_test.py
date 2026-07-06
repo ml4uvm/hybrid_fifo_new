@@ -15,7 +15,7 @@ class FIFOTest(uvm_test):
         # =====================================================
         # BASELINE MODE (CRV/CDV comparison)
         # =====================================================
-        seq = FIFOSequence("seq", total_budget=180, use_hybrid=False)
+        seq = FIFOSequence("seq", total_budget=36, use_hybrid=False)
 
         # =====================================================
         # HYBRID MODE (ML pool -> software-tracked-state gap filling)

@@ -207,7 +207,6 @@ class FIFOAgent(uvm_agent):
     def build_phase(self):
         self.seqr = uvm_sequencer("seqr", self)
         self.driver = FIFODriver("driver", self)
-        # self.monitor = FIFOMonitor("monitor", self)   # no longer wired into the data path
 
     def connect_phase(self):
         self.driver.seq_item_port.connect(self.seqr.seq_item_export)
@@ -220,8 +219,5 @@ class FIFOEnv(uvm_env):
         self.scoreboard = FIFOScoreboard("scoreboard", self)
 
     def connect_phase(self):
-        self.agent.driver.ap = self.cov_export       # driver -> coverage
-        # driver also needs a second analysis-style hookup to the scoreboard;
-        # simplest: give driver two ap references, or a single ap.write that
-        # fans out. I'd rather confirm which you prefer before changing this
-        # further, since it touches how CoverageExport/Scoreboard receive data.
+        self.agent.driver.ap.connect(self.cov_export)                 # Driver -> CoverageExport
+        self.agent.driver.ap.connect(self.scoreboard.analysis_export)  # Driver -> Scoreboard

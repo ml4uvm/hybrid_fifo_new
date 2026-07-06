@@ -1,12 +1,12 @@
 import cocotb
-from pyuvm import uvm_driver
+from pyuvm import uvm_driver, uvm_analysis_port
 from cocotb.triggers import RisingEdge, ReadOnly, NextTimeStep
 
 
 class FIFODriver(uvm_driver):
     def build_phase(self):
         self.dut = cocotb.top
-        self.ap = None  # set by env.py
+        self.ap = uvm_analysis_port("ap", self)
 
     async def run_phase(self):
         # ----------------------------
@@ -22,9 +22,9 @@ class FIFODriver(uvm_driver):
         await RisingEdge(self.dut.clk)
 
         await ReadOnly()
-        full_before = int(str(self.dut.full.value))
-        empty_before = int(str(self.dut.empty.value))
-        await NextTimeStep()  # exit ReadOnly -> writes are legal again
+        full_before = int(self.dut.full.value)      # CHANGED: no str() wrapper
+        empty_before = int(self.dut.empty.value)     # CHANGED: no str() wrapper
+        await NextTimeStep()
 
         # ----------------------------
         # Main driver loop
@@ -42,13 +42,11 @@ class FIFODriver(uvm_driver):
             await RisingEdge(self.dut.clk)
             await ReadOnly()
 
-            item.data_out = int(str(self.dut.data_out.value))
-            full_before = int(str(self.dut.full.value))
-            empty_before = int(str(self.dut.empty.value))
+            item.data_out = int(self.dut.data_out.value)     # CHANGED: this was the actual crash site
+            full_before = int(self.dut.full.value)            # CHANGED
+            empty_before = int(self.dut.empty.value)           # CHANGED
 
-            await NextTimeStep()  # exit ReadOnly before next loop's writes
+            await NextTimeStep()
 
-            if self.ap is not None:
-                self.ap.write(item)
-
+            self.ap.write(item)
             self.seq_item_port.item_done()
